@@ -1,0 +1,59 @@
+name: Automated Commit
+
+on:
+  push:
+    branches: [master]
+
+  schedule:
+    - cron: '0/20 * * * *'
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update_commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Debug Information
+        run: echo "::debug::Triggered by ref = ${{github.ref}}"
+
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Update Timestamp Files
+        run: |
+          current_time=$(date '+%Y-%m-%d %H:%M:%S')
+          echo "Updated on $current_time" > TIMESTAMP.txt
+          echo "Wayah: $current_time" > Wayah.txt
+          echo "Waktu: $current_time" > Waktu.txt
+          echo "Wektu: $current_time" > Wektu.txt
+
+      - name: Setup Git Configuration
+        run: |
+          git config user.email "bilqissalmaaaa@gmail.com"
+          git config user.name "bilqissalmaaaa"
+
+      - name: Prepare and Commit Changes
+        run: |
+          declare -A files_and_msgs
+          files_and_msgs["TIMESTAMP.txt"]="Timestamp update: 🕒"
+          files_and_msgs["Wayah.txt"]="Wayah update: 🌟"
+          files_and_msgs["Waktu.txt"]="Waktu update: 🔄"
+          files_and_msgs["Wektu.txt"]="Wektu update: 📈"
+
+          for file in "${!files_and_msgs[@]}"; do
+            git add "$file"
+            git commit -m "${files_and_msgs[$file]} - $(date '+%Y-%m-%d %H:%M:%S')" || echo "No changes to commit for $file."
+          done
+
+      - name: GitHub Push
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          directory: '.'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
